@@ -1,6 +1,7 @@
 import sys
 import os
 from typing import List, Union
+from emit import Program
 from parser import ASTNode,  SourceLocation, LiteralNode, IdentifierNode
 from syntax_template import match_template
 
@@ -112,6 +113,21 @@ def splitLines( file: str, contents: str ) -> List[ASTNode]:
     return lines
 
 
+def emit_program( scriptfile: str ):
+    prog = Program()
+    with open(scriptfile, 'r') as f:
+        contents = f.read()
+    lines = splitLines(scriptfile, contents)
+    templates =  match_template(lines )
+
+    for tlist in templates:
+        for t in tlist:
+            print(f"Emitting template: {t}")
+            errorCode = prog.emit(t)
+            if errorCode:
+                return prog, errorCode
+    prog.initVars()        
+    return prog, None
 
 
 if __name__ == "__main__":
@@ -121,22 +137,25 @@ if __name__ == "__main__":
 
     scriptfile = sys.argv[1]
     contents = ""
-    with open(scriptfile, 'r') as f:
-        contents = f.read()
 
-    lines = splitLines(scriptfile, contents)
-    #group same line
-    grouped_lines = {} #line number , ids from this line
-    for node in lines:
-        if node.sourceLocation.line not in grouped_lines:
-            grouped_lines[node.sourceLocation.line] = []
-        grouped_lines[node.sourceLocation.line].append(node)
+    p = emit_program(scriptfile)
+    prog, errorCode = p
+    if errorCode:
+        print(f"Error emitting program: {errorCode}")
+    else:
+        print("Program emitted successfully.")
+        for instances in prog.instances:
+            print(f"Instance: {instances.name}")
+            for var in instances.kindVariables.values():
+                print(f"  Variable: {var.name}, Initial Value: {var.initial_value}")
+            for enumVar in instances.enumVariables.values():
+                print(f"  Enum Variable: {enumVar.options}, Initial Value: {enumVar.initial_value}")    
+        for kinds in prog.kinds:
+            print(f"Kind: {kinds.name}")
+            for var in kinds.kindVariables.values():
+                print(f"  Variable: {var.name}, Initial Value: {var.initial_value}")
+            for enumVar in kinds.enumVariables.values():
+                print(f"  Enum Variable: {enumVar.options}, Initial Value: {enumVar.initial_value}")
 
-    for line_num in sorted(grouped_lines.keys()):
-        print(f"Line {line_num}:")
-        for node in grouped_lines[line_num]:
-            print(f"  {node}")
-
-    templates =  match_template(lines )
-    for t in templates:
-        print(t)
+     
+        

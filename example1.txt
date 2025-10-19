@@ -1,14 +1,13 @@
-north is an direction.
-south is an direction.
 
-hall is an room.
+A thing is a kind.
+A thing has a text called a description. 
+A object is an Kind of thing.
 
-the book is on hall.
-the book description is "an old and misterious book".
-the color      of book is red.
 
-book index  is " chapter 1.
- chapter 2
- appendix ".
+book is an object.
+the book description is "an old and mysterious book".
 
-the book is small.
+A thing can be lit or unlit.
+ A thing is usually unlit.
+ A object is usually lit.
+ 

@@ -1,15 +1,14 @@
 import os
 from typing import List, Union , Dict, Any , Generator
 from parser import ASTNode,  SourceLocation, LiteralNode, IdentifierNode
+from emit import INSTANCE, CVAR_ENUM, CVAR_KIND, INITIAL_ASSIGN, SUBCLASS
 
 #Language Instructions
     #CreateAssert( X , "property" , Y )
     #createInstance( X , Y )
     #createSubClass( X , Y )
 
-INSTANCE = "CreateInstance"
-ASSIGN   = "CreateAssert"
-SUBCLASS = "CreateSubClass"
+ 
 
 
 #---------------------------------
@@ -30,6 +29,17 @@ def generateCombinations( parts:  List[Any] , n: int )  :
             for remaining_parts in generateCombinations(parts[i:], n-1):
                 yield [first_part] + remaining_parts
 
+def isValueEquivalent( a: str, b: str  ) -> bool:
+    # b can be an string single, or an OR match kind  like : a/an/the 
+    a = a.lower().strip()
+    b = b.lower().strip()
+    if "/" in b:
+        options = [ opt.strip() for opt in b.split("/") ]
+        for opt in options:
+            if isValueEquivalent( a , opt ):
+                return True
+        return False
+    return a == b
 
 def match(  x:List[ASTNode] , template  )  :
     #split template by spaces
@@ -54,7 +64,8 @@ def match(  x:List[ASTNode] , template  )  :
                 if not isinstance(node, IdentifierNode):
                     hasMatch = False
                     break
-                if node.value != rrt:
+                 
+                if not isValueEquivalent(node.value, rrt):
                     #print(">>>", node.value , "!=" , rrt)
                     hasMatch = False
                     break
@@ -62,15 +73,55 @@ def match(  x:List[ASTNode] , template  )  :
             return match_vars
     return None
 
+def decomposeOptions(x:List[ASTNode]):
+    # a, b,c c or d  -> [a,b,c,d]
+    # a or b -> [a,b]
+    #a,b -> [a,b]
+    options = []
+    current_option = []
+    for node in x:
+        if isinstance(node, IdentifierNode):
+            if node.value == ",":
+                if current_option:
+                    options.append( current_option )
+                    current_option = []
+            elif node.value == "or":
+                if current_option:
+                    options.append( current_option )
+                    current_option = []
+            else:
+                current_option.append( node )
+        else:
+            current_option.append( node )
+    if current_option:
+        options.append( current_option )
+    return options
+    
+
 
 
 def m_definition(x:List[ASTNode])   :
     # X is an Y called Z
-    if mm := match( x,  "X is an Y called Z ."  ):
-        return [  ( INSTANCE ,  mm["X"], mm["Y"] ) ,  ( ASSIGN,  mm["X"] , "name" , mm["Z"] ) ]
-    if mm := match( x,  "X is an Y ."  ):
+    if mm := match( x,  "X is an/a kind of Y ."  ):
+        return [  ( SUBCLASS ,  mm["X"], mm["Y"] ) ]   
+    if mm := match( x,  "X is a/an kind ."  ):     
+        return [  ( SUBCLASS ,  mm["X"], None ) ]
+    if mm := match( x,  "X is a/an Y called Z ."  ):
+        return [  ( INSTANCE ,  mm["X"], mm["Y"] ) ,  ( INITIAL_ASSIGN,  mm["X"] , "name" , mm["Z"] ) ]
+    if mm := match( x,  "X is a/an Y ."  ):
         return [  ( INSTANCE ,  mm["X"], mm["Y"] ) ]
-    return None
+    if mm := match( x,  "X can be Y ."  ):
+        options = decomposeOptions( mm["Y"] )
+        return [  ( CVAR_ENUM ,  mm["X"],options ) ]
+
+    if mm := match( x,  "X has a/an Y called Z ."  ):
+        return [  ( CVAR_KIND ,  mm["X"], mm["Y"], mm["Z"] ) ]
+
+    if mm := match( x,  "X is usually Y ."  ):
+        return [  ( INITIAL_ASSIGN ,  mm["X"], mm["Y"] ) ]
+        
+    if mm := match( x,  "X is Y ."  ):
+        return [  ( INITIAL_ASSIGN ,  mm["X"], mm["Y"] ) ]
 
 
 def getTemplateMatch(x:List[ASTNode]):

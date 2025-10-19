@@ -5,7 +5,7 @@ A thing can be lit or unlit.
 A thing is usually inedible.
 thing can be fixed in place or portable. A thing is usually portable.
 A thing can be scenery.
- A thing can be wearable.
+ A thing can be wearable. 
  A thing can be pushable between rooms.   A thing can be handled.  
  A thing can be privately-named or publicly-named.
  A thing is usually publicly-named.
@@ -15,3 +15,5 @@ A thing can be scenery.
  A thing is usually unmarked for listing. A thing can be mentioned or unmentioned. A thing is usually mentioned.  
  A thing has a text called a description.
   A thing has a text called an initial appearance.
+
+ 
