@@ -74,22 +74,10 @@ def splitTerm( x : IdentifierNode  ) -> List[IdentifierNode]:
     terms_out= [ (t[0], t[1].strip()) for t in terms_out ]        
     terms_out = [ t for t in terms_out if t[1] != ""  ]        
  
-    print("TERMS OUT:", terms_out)
     result = []
     for term in terms_out:
         loc = SourceLocation(x.sourceLocation.line, x.sourceLocation.column + term[0])
         result.append(IdentifierNode(term[1], loc))
-
-    #values_offset  = [] #store (offset, value)
-    
-    # import re
-    # for match in re.finditer(r'\S+', x.value):
-    #     values_offset.append( (match.start(), match.group(0)) )
-    # result = []
-    # for offset, value in values_offset:
-    #     loc = SourceLocation(x.sourceLocation.line, x.sourceLocation.column + offset)
-    #     result.append(IdentifierNode(value, loc))
-    # result = splitTermPunct( result )
     return result
 
 
