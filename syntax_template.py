@@ -144,13 +144,17 @@ def groupBy(x:List[Any], predicate)   :
             yield from groupBy(x[i+1:], predicate)
             return
 
-def match_template(x:List[ASTNode]) :
+def match_template(x:List[ASTNode]) : 
     #group by dot [.] terms
     for xgroup  in groupBy(x, isEndPoint):
         print("XGROUP:", xgroup)
+        hasMatched = False
         if mm := m_definition(xgroup):
             yield mm
-
+            hasMatched = True
+        if not hasMatched:
+            yield [ ("ErrorCompile", f"Could not match template for instruction: {' '.join([n.value for n in xgroup])}" ) ]
+  
 
 if __name__ == "__main__":
     for g in  generateCombinations( "a b c e".split() , 2):

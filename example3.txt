@@ -1,0 +1,7 @@
+thing is an kind .
+book is an thing.
+book can be red or blue .
+
+if book is red then 
+
+end.

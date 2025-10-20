@@ -295,7 +295,7 @@ class Program:
             print(f"Emitting: CreateCVarEnum for {identifier} with options {[ [n.value for n in opt ] for opt in options ] }")
             target = self.getInstanceByName( identifier )
             if target is None:
-                target = self.getKindByName( identifier )
+                target = self.getKindByName( identifier )                
 
             if target is None:             
                 return ErrorCompile(f"Instance {identifier} not defined ") 

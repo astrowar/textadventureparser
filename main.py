@@ -42,19 +42,54 @@ def splitTermPunct( x: List[IdentifierNode]  ) -> List[IdentifierNode] :
     return result
 
 def splitTerm( x : IdentifierNode  ) -> List[IdentifierNode]:
+    punct = set(['.',',','!','?',';',':'])
     #value nas white spaces ?
-    if   x.value.count(' ')  == 0:
-        return [x]
-    values_offset  = [] #store (offset, value)
-    #use re to split by whitespace but keep the offsets
-    import re
-    for match in re.finditer(r'\S+', x.value):
-        values_offset.append( (match.start(), match.group(0)) )
+    
+    terms_out = []  #( offset , string)
+    remainder = x.value+""
+    i = 0
+    offset = 0
+    while len(remainder) > 0 :
+        if remainder[i] == ' ' :
+            # an this -> +[an] remainder:[this]
+            terms_out .append( ( offset,remainder[ :i]))
+            remainder = remainder[i+1:]
+            offset += i + 1
+            i = 0   
+        elif remainder[i] in punct :
+            # an.this -> +[an] +[.] remainder:[this]
+            terms_out.append( ( offset,remainder[ :i]))
+            terms_out.append( ( offset + i, remainder[i] + "") )
+            remainder = remainder[i+1:]
+            offset += i + 1
+            i = 0    
+        else:
+            i += 1
+            if i >= len(remainder):
+                terms_out.append( ( offset,remainder))
+                remainder = ""
+                i = 0
+                break 
+            
+    terms_out= [ (t[0], t[1].strip()) for t in terms_out ]        
+    terms_out = [ t for t in terms_out if t[1] != ""  ]        
+ 
+    print("TERMS OUT:", terms_out)
     result = []
-    for offset, value in values_offset:
-        loc = SourceLocation(x.sourceLocation.line, x.sourceLocation.column + offset)
-        result.append(IdentifierNode(value, loc))
-    result = splitTermPunct( result )
+    for term in terms_out:
+        loc = SourceLocation(x.sourceLocation.line, x.sourceLocation.column + term[0])
+        result.append(IdentifierNode(term[1], loc))
+
+    #values_offset  = [] #store (offset, value)
+    
+    # import re
+    # for match in re.finditer(r'\S+', x.value):
+    #     values_offset.append( (match.start(), match.group(0)) )
+    # result = []
+    # for offset, value in values_offset:
+    #     loc = SourceLocation(x.sourceLocation.line, x.sourceLocation.column + offset)
+    #     result.append(IdentifierNode(value, loc))
+    # result = splitTermPunct( result )
     return result
 
 
@@ -118,6 +153,8 @@ def emit_program( scriptfile: str ):
     with open(scriptfile, 'r') as f:
         contents = f.read()
     lines = splitLines(scriptfile, contents)
+    
+         
     templates =  match_template(lines )
 
     for tlist in templates:
